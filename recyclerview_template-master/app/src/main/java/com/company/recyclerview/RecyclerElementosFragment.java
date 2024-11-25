@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RatingBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -12,6 +13,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.company.recyclerview.databinding.FragmentRecyclerElementosBinding;
@@ -43,6 +45,24 @@ public class RecyclerElementosFragment extends Fragment {
 
             holder.binding.nombre.setText(elemento.nombre);
             holder.binding.valoracion.setRating(elemento.valoracion);
+
+
+            holder.binding.valoracion.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+                @Override
+                public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
+                    if(fromUser) {
+                        elementosViewModel.actualizar(elemento, rating);
+                    }
+                }
+            });
+
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    elementosViewModel.seleccionar(elemento);
+                    navController.navigate(R.id.action_recyclerElementosFragment_to_mostrarElementoFragment);
+                }
+            });
         }
 
         @Override
@@ -53,6 +73,10 @@ public class RecyclerElementosFragment extends Fragment {
         public void establecerLista(List<Elemento> elementos){
             this.elementos = elementos;
             notifyDataSetChanged();
+        }
+
+        public Elemento obtenerElemento(int posicion){
+            return elementos.get(posicion);
         }
     }
 
@@ -84,6 +108,25 @@ public class RecyclerElementosFragment extends Fragment {
                 navController.navigate(R.id.action_recyclerElementosFragment_to_nuevoElementoFragment);
             }
         });
+
+        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
+                ItemTouchHelper.UP | ItemTouchHelper.DOWN,
+                ItemTouchHelper.RIGHT  | ItemTouchHelper.LEFT) {
+
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return true;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int posicion = viewHolder.getAdapterPosition();
+                Elemento elemento = elementosAdapter.obtenerElemento(posicion);
+                elementosViewModel.eliminar(elemento);
+
+            }
+        }).attachToRecyclerView(binding.recyclerView);
+
 
 
     }
